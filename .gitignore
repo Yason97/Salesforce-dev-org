@@ -1,0 +1,8 @@
+*.debug
+*.sessions
+*.describe
+*.settings
+*.local_store
+*.lightning
+config
+*.sublime-project
