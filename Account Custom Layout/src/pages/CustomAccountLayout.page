@@ -1,0 +1,146 @@
+<apex:page showHeader="true" sidebar="true" standardController="Account" extensions="ExtensionPaginationController">
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script type="text/javascript">
+	$(document).ready(function() {
+		checkAllCheckBoxes = function (sender){
+    		$('.unselectedCheckbox').each(function() { 
+        	this.checked = sender.checked;              
+    		});         
+		}
+
+		darkenPage = function(){
+			$('#overlay').css({'background-color': 'black',
+			'opacity': '0.5',
+			'width':'200%',
+			'height':'200%',
+			'position':'fixed',
+			'margin-left':'-50%',
+			'margin-top':'-50%',
+			'z-index':'9998'});			
+		}
+
+		freePage = function(){
+			$('#overlay').css({'width':'1px','height':'1px'});
+		}
+	})
+</script>
+	<div id="overlay"></div>
+    <apex:detail inlineEdit="true" relatedList="false"/>
+    <apex:form id="contactForm">
+
+    	<apex:actionFunction action="{!changeQueryLimit}" name="changeQueryLimitJS" reRender="contactForm"/>
+    	<apex:actionFunction action="{!flipSortKey}" name="flipKeyJS">
+    		<apex:param name="first_param" assignTo="{!SortKey}" value=""/>
+    	</apex:actionFunction>
+    	<!--<apex:actionFunction action="{!addContactField}" name="addFieldJS" reRender="popup"/> -->
+
+    	<apex:pageBlock title="Related Contacts" mode="InlineEdit">
+
+    		<apex:pageBlockSection columns="4">
+    			<apex:outputText value="{!'Page' + TEXT(currentPageNumber) + ' of ' + TEXT(CEILING(contactsCount / contactsLimit))}">
+    			</apex:outputText>
+    			<apex:selectList value="{!limitString}" size="1" onchange="changeQueryLimitJS();">
+    				<apex:selectOptions value="{!items}"/>
+    			</apex:selectList>
+    			<apex:commandButton value="Save" action="{!customEdit}" id="saveButton" style="display: none" reRender="contactForm"/>
+    			<apex:commandButton image="{!URLFOR($Resource.settings_icon)}" rerender="popup" status="status" action="{!displayPopup}" onclick="darkenPage()" >
+		</apex:commandButton> 
+    		</apex:pageBlockSection>
+
+    		<apex:pageBlockButtons id="controlButtons">
+    			<apex:commandButton value="First" action="{!getFirst}" id="firstButton" disabled="{!IF(previous,false,true)}" reRender="contactForm"/>
+    			<apex:commandButton value="Previous" action="{!getPrevious}" id="previousButton" disabled="{!IF(previous,false,true)}" reRender="contactForm"/>
+    			<apex:commandButton value="Next" action="{!getNext}" id="nextButton" disabled="{!IF(next,false,true)}" reRender="contactForm"/>
+    			<apex:commandButton value="Last" action="{!getLast}" id="lastButton" disabled="{!IF(next,false,true)}" reRender="contactForm"/>
+    		</apex:pageBlockButtons>
+
+    		<apex:pageBlockTable value="{!contacts}" var="contact" rows="{!contactsLimit}" id="contactTable">
+    		<apex:inlineEditSupport event="ondblClick" showOnEdit="saveButton"/>
+    		<apex:repeat value="{!SelectedFieldsOptions}" var="option">
+    			<apex:column >
+    				<apex:facet name="header">
+    					<apex:commandLink action="{!flipSortKey}" value="{!option.Label}" reRender="contactForm">
+    						<apex:param name="first_param" assignTo="{!SortKey}" value="{!option.Value}"/>
+    					</apex:commandLink>
+    				</apex:facet>
+    				<apex:outputField value="{!contact[option.Value]}" style="width: 16.66%" />
+    			</apex:column>
+    		</apex:repeat>
+    		</apex:pageBlockTable>
+
+    	</apex:pageBlock>
+    </apex:form>
+
+
+    
+	<apex:form >
+	<apex:pageBlock >
+             <apex:outputPanel id="popup">
+                <apex:outputPanel id="popInnerOutputPnl" styleClass="customPopup" layout="block" rendered="{!ShowPopup}">
+                    <apex:commandButton value="X" title="Close the popup"  styleClass="closeButton" rerender="popup" action="{!cancelPopup}" onclick="freePage()">
+                    </apex:commandButton>
+                    <apex:pageblockSection >                                     
+                        <c:MultiselectPicklist leftLabel="Available Fields"
+						    leftOptions="{!AvailableFieldsOptions}"
+						    rightLabel="Selected Fields"
+						    rightOptions="{!SelectedFieldsOptions}"
+						    size="14"
+						    width="150px"/>
+                    </apex:pageblockSection>
+                    <apex:commandButton value="Save" styleClass="closeButton" rerender="popup, contactForm" action="{!savePopupChanges}" onclick="freePage()">
+                    </apex:commandButton>
+                </apex:outputPanel>
+            </apex:outputPanel>        
+        </apex:pageBlock>         
+    </apex:form>
+    <style type="text/css">
+.customPopup {
+    background-color: white;
+    border-style: solid;
+    border-width: 2px;
+    left: 25%;
+    padding: 10px;
+    position: fixed;
+    z-index: 9999;
+    /* These are the 3 css properties you will need to tweak so the pop 
+                            up displays in the center of the screen. First set the width. Then set 
+                            margin-left to negative half of what the width is. You can also add 
+                            the height property for a fixed size pop up.*/
+    width: 50%;
+    top: 20%;
+}
+
+.dark{
+	background-color": black;
+	opacity: 0.5;
+	width:200%;
+	height:200%;
+	position:fixed;
+	margin-left:-50%;
+	margin-top:-50%;
+	z-index: 9998;
+}
+
+.hidden{
+	display: none;
+}
+
+.disabledTextBox {
+    background-color: white;
+    border: 1px solid;
+    color: black;
+    cursor: default;
+    width: 90px;
+    display: table;
+    padding: 2px 1px;
+    text-align:right;
+}   
+
+.closeButton {
+    float: right;
+}
+</style>
+
+	<c:RelatedList relatedSObjectApiName='Contact' />
+
+</apex:page>
